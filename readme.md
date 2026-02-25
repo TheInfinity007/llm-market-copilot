@@ -11,6 +11,9 @@ This file holds everything that actually makes the copilot work:
 
 If you want to reuse this copilot anywhere else later, this is the file you keep.
 
+### Engine
+It contains a single callable function that takes a query, pulls the required facts using EODHD tools, and returns two things: a Markdown brief for humans, and a structured artifacts dictionary for the UI.
+
 ## app.py – the MVP shell
 
 This is just the Streamlit layer:
