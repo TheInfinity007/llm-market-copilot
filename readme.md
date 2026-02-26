@@ -1,5 +1,10 @@
 # Project source: https://www.freecodecamp.org/news/build-an-llm-market-copilot-with-langchain
 
+
+## Activate venv
+`cd llm-market-copilot`
+`source venv/bin/activate`
+
 ## copilot.py – the engine
 This file holds everything that actually makes the copilot work:
 
