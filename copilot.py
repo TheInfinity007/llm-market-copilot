@@ -224,3 +224,117 @@ def eod_prices(ticker: str, start: str, end: str) -> List[Dict[str, Any]]:
     
     df = get_eod_prices_raw(ticker, start, end)
     return json.loads(df.to_json(orient="records"))
+
+
+# -----------------------------------------------------------------------
+# Creating an agent
+# Define how the agent should behave and give it the tools it's allowed to use.
+# -----------------------------------------------------------------------
+
+system_prompt = (
+    "You are a market brief copilot embedded in a product.\n"
+    "Rules:\n"
+    "1) Use tools for facts. Never invent numbers.\n"
+    "2) Do not dump raw prices rows or long news lists. \n"
+    "3) If the user didn't ask for something, don't compute it. \n"
+    "4) Output in clean Markdown with sections\n"
+    "5) Keep it short and useful, like an internal dashboard note.\n"
+    "Tool guidance:\n"
+    "- Use last_n_days_prices for return windows.\n"
+    "- Use fundamentals_snapshot for PE/PB/market cap/sector/beta.\n"
+    "- Use latest_news for headlines.\n"
+    "- Use risk_metrics only if asked for volatility or drawdown.\n"
+    "- Use eod_prices only if you can't do what the user asks with the other tools.\n"
+)
+
+def _build_agent() -> Any:
+    llm = ChatOpenAI(
+        model="gpt-5-nano",
+        temperature=0.0,
+        api_key=openai_api_key,
+    )
+    
+    tools = [last_n_days_prices, fundamentals_snapshot, latest_news, risk_metrics, eod_prices]
+    return create_react_agent(model=llm, tools=tools)
+
+AGENT = _build_agent()
+
+def _extract_artifacts(messages: List[Any]) -> Dict[str, Any]:
+    """
+    Pull tool outputs from the LangGraph message list.
+    This avoids calling the endpoints twice in Streamlit.
+    """
+    
+    out: Dict[str, Any] = {}
+    for msg in messages:
+        name = getattr(msg, "name", None)
+        content = getattr(msg, "content", None)
+        
+        if not name:
+            continue
+        
+        payload = _safe_json_loads(content)
+        if payload is None:
+            continue
+        
+        if name.endsWith("last_n_days_prices"):
+            out["price"] = payload
+        elif name.endsWith("fundamentals_snapshot"):
+            out["valuation"] = payload
+        elif name.endsWith("risk_metrics"):
+            out["risk"] = payload
+        elif name.endsWith("latest_news"):
+            out["headlines"] = payload
+        
+    return out
+    
+    
+
+# -----------------------------------------------------------------------
+# Tuning the agent into a callable backend
+# Up to now, we’ve built tools and an agent. This is the piece that turns it into something your app can call like a regular backend function. One input in, one brief out, plus the structured data you need to render the UI.
+# -----------------------------------------------------------------------
+
+def run_brief(
+    ticker: str,
+    n_days: int = 60,
+    include_fundamentals: bool = True,
+    include_risk: bool = False,
+    include_news: bool = True,
+    news_limit: int = 5,
+) -> Tuple[str, Dict[str, Any]]:
+    """
+    Returns:
+     - markdown brief (string)
+     - artifacts dict with keys like price/valuation/risk/headlines when tools were used
+    """
+    t = normalize_ticker(ticker)
+    
+    request_parts = [
+        f"ticker={t}",
+        f"Compute total return over the last {int(n_days)} trading days.",
+    ]
+    
+    if include_fundamentals:
+        request_parts.append("Fetch fundamentals and report PE, BE, market cap, sector, beta.")
+    if include_risk:
+        request_parts.append("Compute annualized volatility and max drawdown over the same window.")
+        request_parts.append("Use the same start_date and end_date as the return window.")
+    if include_news:
+        request_parts.append(f"Pull {int(news_limit)} latest headlines and reference them briefly.")
+    
+    request_parts.append("Write a short market brief with sections: Snapshots, Metrics, What it might mean, Caveats.")
+    request_parts.append("Keep it concise. Do not paste raw rows.")
+    
+    user_prompt = " ".join(request_parts)
+    
+    response = AGENT.invoke(
+        { "messages": [("system", system_prompt), ("user", user_prompt)] }
+    )
+    
+    messages = response.get("messages", [])
+    final_msg = messages[-1]
+    brief_md = getattr(final_msg, "content", "") or ""
+    
+    artifacts = _extract_artifacts(messages)
+    return brief_md, artifacts

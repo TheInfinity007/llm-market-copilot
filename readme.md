@@ -32,3 +32,9 @@ No data logic lives here. It only calls run_brief() and renders what comes back.
 If everything is mixed into one Streamlit script, you’re stuck with Streamlit forever.
 
 With this split, you can replace Streamlit with FastAPI later without rewriting the core logic. You also keep “product logic” in one place, which makes testing and iteration much easier. And you avoid the notebook trap where UI code and data code become impossible to maintain.
+
+## Creating an agent
+
+#### System prompt
+The system prompt is basically a contract. If you don’t spell this out, the agent will eventually drift. It will start guessing numbers, dumping long outputs, or doing work you didn’t ask for. This prompt keeps it in the “internal brief writer” lane, and the tool guidance reduces tool misuse.
+
