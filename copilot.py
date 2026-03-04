@@ -295,12 +295,13 @@ def _extract_artifacts(messages: List[Any]) -> Dict[str, Any]:
 # Up to now, we’ve built tools and an agent. This is the piece that turns it into something your app can call like a regular backend function. One input in, one brief out, plus the structured data you need to render the UI.
 # -----------------------------------------------------------------------
 
-def run_brief(
-    ticker: str,
-    n_days: int = 60,
-    include_fundamentals: bool = True,
-    include_risk: bool = False,
-    include_news: bool = True,
+def run_query(
+    query: str,
+    default_ticker: str = "AAPL.US",
+    default_n_days: int = 60,
+    force_fundamentals: bool = True,
+    force_risk: bool = False,
+    force_news: bool = False,
     news_limit: int = 5,
 ) -> Tuple[str, Dict[str, Any]]:
     """
@@ -308,25 +309,31 @@ def run_brief(
      - markdown brief (string)
      - artifacts dict with keys like price/valuation/risk/headlines when tools were used
     """
-    t = normalize_ticker(ticker)
     
-    request_parts = [
-        f"ticker={t}",
-        f"Compute total return over the last {int(n_days)} trading days.",
+    q = (query or "").strip()
+    
+    if not q:
+        q = f"For {default_ticker}, compute total return over the last {int(default_n_days)} trading days."
+    
+    constraints = [
+        "Constraints:",
+        "1) Use tools for facts. Never invent numbers.",
+        "2) Do not dump raw prices rows or long news lists.",
+        "3) Output in clean Markdown with sections: Snapshot, Metrics, What it might mean, Caveats.",
+        "4) Keep it short and useful.",
+        f"5) If the query does not specify a window, assume last {int(default_n_days)} trading days.",
+        f"6) If the query does not specify a ticker, assume {normalize_ticker(default_ticker)}.",
     ]
     
-    if include_fundamentals:
-        request_parts.append("Fetch fundamentals and report PE, BE, market cap, sector, beta.")
-    if include_risk:
-        request_parts.append("Compute annualized volatility and max drawdown over the same window.")
-        request_parts.append("Use the same start_date and end_date as the return window.")
-    if include_news:
-        request_parts.append(f"Pull {int(news_limit)} latest headlines and reference them briefly.")
-    
-    request_parts.append("Write a short market brief with sections: Snapshots, Metrics, What it might mean, Caveats.")
-    request_parts.append("Keep it concise. Do not paste raw rows.")
-    
-    user_prompt = " ".join(request_parts)
+    if force_fundamentals:
+        constraints.append("7) You must include fundamentals (PE, PB, market cap, sector, beta). Use fundamentals_snapshot.")
+    if force_risk:
+        constraints.append("8) You must include risk metrics (annualized volatility and max drawdown). Use risk_metrics.")
+        constraints.append(" Use the same start_date and end_date as the return window.")
+    if force_news:
+        constraints.append(f"9) You must include headlines. Pull exactly {int(news_limit)}. Use latest_news.")
+
+    user_prompt = "User query:\n" + q + "\n\n" + "\n".join(constraints)
     
     response = AGENT.invoke(
         { "messages": [("system", system_prompt), ("user", user_prompt)] }
@@ -338,6 +345,7 @@ def run_brief(
     
     artifacts = _extract_artifacts(messages)
     return brief_md, artifacts
+
 
 
 def run_agent(query: str):
