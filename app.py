@@ -22,3 +22,90 @@ with st.sidebar:
         news_limit = st.slider("Headlines count", min_value=3, max_value=10, value=5, step=1, disabled=not include_news)
         
     run_btn = st.button("Generate brief", type="primary")
+    
+def _render_metrics(artifacts: dict):
+    cols = st.columns(3)
+    
+    price = artifacts.get("price")
+    valuation = artifacts.get("valuation")
+    risk = artifacts.get("risk")
+    headlines = artifacts.get("headlines")
+    
+    with cols[0]:
+        st.subheader("Price window")
+        if isinstance(price, dict) and "error" not in price:
+            st.metric("Total return", f"{price.get('total_return', 0.0) * 100: .2f}%")
+            st.caption(f"{price.get('start_date')} to {price.get('end_date')} . N={price.get('n')}")
+            st.write(
+                pd.DataFrame([price]).rename(
+                    columns={
+                        "first_close": "first_close",
+                        "last_close": "last_close",
+                        "total_return": "total_return (decimal)",
+                    }
+                ).T
+            )
+        elif isinstance(price, dict) and "error" in price:
+            st.warning(price["error"])
+        else:
+            st.info("No price tool output (not requested or tool not used).")
+        
+    with cols[1]:
+        st.subheader("Fundamentals")
+    
+    with cols[2]:
+        st.subheader("Risk")
+        
+
+    st.subheader("Headlines")
+    if isinstance(headlines, list) and len(headlines) > 0:
+        for h in headlines:
+            title = h.get("title", "Untitled")
+            link = h.get("link")
+            src = h.get("source")
+            dt = h.get("date")
+            line = f"- {title}"
+            if src:
+                line += f" ({src})"
+            if dt:
+                line += f" . {dt}"
+            if link:
+                st.markdown(f"{line} \n {link}")
+            else:
+                st.markdown(line)
+                
+    else:
+        st.info("No headlines tool output (not requested or tool not used).")
+if not run_btn:
+    # with st.spinner("Running tools and generating brief..."):
+    #     brief_md, artifacts = run_query(
+    #         query=query,
+    #         default_ticker=default_ticker,
+    #         default_n_days=default_n_days,
+    #         force_fundamentals=include_fundamentals,
+    #         force_risk=include_risk,
+    #         force_news=include_news,
+    #         news_limit=news_limit    
+    #     )
+    
+    artifacts = {
+            "price": { "ticker": "AAPL.US", "total_return": 0.0299, "start_date": "2025-11-07", "end_date": "2026-02-04", "n": 60, "first_close": 268.4, "last_close": 276.4 },
+            "headlines": [
+                {"title": "Apple releases new iPhone model", "link": "https://example.com/apple-iphone", "source": "TechCrunch", "date": "2026-02-03"},
+                {"title": "Apple's quarterly earnings beat expectations", "link": "https://example.com/apple-earnings", "source": "Bloomberg", "date": "2026-01-30"},
+                {"title": "Apple faces supply chain issues in Asia", "link": None, "source": "Reuters", "date": "2026-01-25"}
+            ]
+        }
+        
+    left, right = st.columns([1.2,1])
+    
+    with left:
+        st.subheader("Market brief")
+        st.markdown("brief text")
+    
+    with right:
+        st.subheader("Tool-backed metrics")
+        _render_metrics(artifacts = artifacts)
+        
+else:
+    st.info("Set inputs on the left and click **Generate brief**.")
