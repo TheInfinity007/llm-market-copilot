@@ -338,3 +338,142 @@ def run_brief(
     
     artifacts = _extract_artifacts(messages)
     return brief_md, artifacts
+
+
+def run_agent(query: str):
+    # This is a simple wrapper to run the agent with a raw user query.
+    # The agent will decide which tools to call and what to include in the brief.
+    response = AGENT.invoke(
+        { "messages": [("system", system_prompt), ("user", query)] }
+    )
+    
+    messages = response.get("messages", [])
+    final_msg = messages[-1].content if messages else ""
+    
+    print("\n" + "=" * 80)
+    print("Query:\n" , query)
+    print("\nAnswer:\n", final_msg)
+    
+    return response
+
+# -----------------------------------------------------------------------
+# Demo1: Baseline brief (return + fundamentals + headlines)
+# "Give me the situation" request, In the output, we want to see 
+# one window, one return, key valuation fields, and a short headline-backed story.
+# -----------------------------------------------------------------------
+
+
+response = run_agent(
+    "Ticker: AAPL.US. Compute total return over the last 60 trading days. "
+    "Fetch fundamentals and report PE, PB, market cap, sector, beta. "
+    "Pull 5 latest headlines and reference them briefly. "
+    "Write a short market brief with sections: Snapshots, Metrics, What it might mean, Caveats. "
+    "Keep it concise. Do not paste raw rows."
+)
+
+'''
+================================================================================
+QUERY:
+Ticker: AAPL.US. Compute total return over the last 60 trading days. Fetch fundamentals and report PE, PB, market cap, sector, beta. Pull 5 latest headlines and reference them briefly. Write a short market brief with sections: Snapshot, Metrics, What it might mean, Caveats. Keep it concise. Do not paste raw rows.
+
+ANSWER:
+### Snapshot
+- Window: last 60 trading days (2025-10-28 to 2026-01-23)
+- Price path: 269.00 → 248.04
+- Total return: -7.79%
+
+### Metrics
+- Sector: Technology
+- Market cap: $3.665T (3,665,126,490,112)
+- P/E: 33.20
+- P/B: 49.44
+- Beta: 1.09
+
+### What it might mean
+- The 60-day horizon shows a ~7.8% decline alongside a tech-focused mega-cap backdrop. Elevated P/B suggests high balance-sheet or growth expectations reflected in asset valuation. Macro headlines point to ongoing risk factors (Fed policy, geopolitical/economic headlines) shaping near-term moves.
+
+Headlines reference (brief)
+- IWO vs. MGK: How Small-Cap Diversification Compares to Mega-Cap Growth - context on growth tilts and diversification
+- Stock Futures Are Falling Ahead of Fed Meeting as Shutdown Fears Rise - macro risk backdrop
+- This founder cracked firefighting - now he's creating an AI gold mine - AI/tech narrative
+- Dow Jones Futures Fall; Trump Tariffs, Government Shutdown, Big Earnings In Focus - earnings/macroe attention
+- SPDR's SPTM Offers Broad Market Reach, While Vanguard's VTV Targets Value Stocks. Which Is the Better Buy? - market breadth/value debate
+
+### Caveats
+- Data reflect the latest available snapshot; updates can shift returns, multiples, and fundamentals.
+- PB is unusually high here; interpret as market perception of value/assets rather than a strict earnings-based metric.
+- This is not investment advice; consider broader context and your risk tolerance.
+'''
+
+
+# -----------------------------------------------------------------------
+# Demo2: Risk-first brief (Volatility + drawdown on the same window)
+# This is the “tell me how ugly it got” workflow. 
+# The output should show a return, volatility, and max drawdown all computed on the same dates.
+# -----------------------------------------------------------------------
+
+response = run_agent(
+    "Ticker: MSFT.US. Compute total return over the last 90 trading days. "
+    "Compute annualized volatility and max drawdown over the same window. "
+    "Use the same start_date and end_date as the return window. "
+    "Write a short market brief with sections: Snapshots, Metrics, What it might mean, Caveats. "
+)
+
+'''
+================================================================================
+QUERY:
+Ticker: MSFT.US. Compute total return over the last 90 trading days. Compute annualized volatility and max drawdown over the same window. Use the same start_date and end_date as the return window. Write a short market brief with sections: Snapshot, Metrics, What it might mean, Caveats.
+
+ANSWER:
+## Market Brief - MSFT.US
+
+Snapshot
+- Window: 2025-09-16 to 2026-01-23 (90 trading days)
+- Start price: 509.04
+- End price: 465.95
+- Total return (price only): -8.46% over the window (dividends not included)
+
+Metrics
+- Annualized volatility: 19.30%
+- Max drawdown: -18.07% (peak-to-trough during the window)
+
+What it might mean
+- The period shows meaningful downside with elevated volatility, ending the 90-day window in a weaker price regime.
+- A roughly 18% drawdown alongside ~19% annualized volatility suggests higher-than-average price swings for this horizon.
+- If you're evaluating risk, this window points to downside risk exposure that could matter for near-term positioning.
+
+Caveats
+- This total return reflects price movement only; dividends are not included.
+- Results depend on the exact window; future performance can differ materially.
+- Data as of 2026-01-23; markets and fundamentals can change quickly. If you want, I can add a quick fundamentals snapshot or news context.
+'''
+
+# -----------------------------------------------------------------------
+# Demo3: News-only “what changed” (no metrics unless required)
+# This is the “give me context fast” workflow. 
+# The output should stay narrative and not sneak in extra metrics 
+# since the query explicitly says not to.
+# -----------------------------------------------------------------------
+
+response = run_agent(
+    "Ticker: AAPL.US. Pull 7 latest headlines. "
+    "Give a short 'what changed' summary in 6-8 lines, referring themes, not every headline. "
+    "Do not compute return unless needed."
+)
+
+'''
+================================================================================
+QUERY:
+Ticker: AAPL.US. Pull 7 latest headlines. Give a short 'what changed' summary in 6-8 lines, referencing themes, not every headline. Do not compute returns unless needed.
+
+ANSWER:
+## AAPL.US – 7 latest headlines: thematic quick read
+
+What changed (themes)
+- Macro risk is back in focus: futures drift lower ahead of the Fed meeting, with shutdown fears weighing sentiment.
+- Policy risk remains a thread: tariffs and government shutdown headlines keep policy uncertainty front and center.
+- Allocation debates persist: small-cap vs mega-cap discussions (IWO vs MGK) drive diversification talk.
+- Growth vs value framing broadens: SPTM vs VTV and VOOG vs IWO highlight different exposure bets.
+- Earnings season adds collateral volatility alongside macro noise.
+- AI narrative gains traction: a founder profile signals growing interest in AI-enabled investment theme
+'''
