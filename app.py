@@ -94,29 +94,29 @@ def _render_metrics(artifacts: dict):
     else:
         st.info("No headlines tool output (not requested or tool not used).")
 
-if not run_btn:
-    # with st.spinner("Running tools and generating brief..."):
-    #     brief_md, artifacts = run_query(
-    #         query=query,
-    #         default_ticker=default_ticker,
-    #         default_n_days=default_n_days,
-    #         force_fundamentals=include_fundamentals,
-    #         force_risk=include_risk,
-    #         force_news=include_news,
-    #         news_limit=news_limit    
-    #     )
+if run_btn:
+    with st.spinner("Running tools and generating brief..."):
+        brief_md, artifacts = run_query(
+            query=query,
+            default_ticker=default_ticker,
+            default_n_days=default_n_days,
+            force_fundamentals=include_fundamentals,
+            force_risk=include_risk,
+            force_news=include_news,
+            news_limit=news_limit    
+        )
     
-    artifacts = {
-            "price": { "ticker": "AAPL.US", "total_return": 0.0299, "start_date": "2025-11-07", "end_date": "2026-02-04", "n": 60, "first_close": 268.4, "last_close": 276.4 },
-            "headlines": [
-                {"title": "Apple releases new iPhone model", "link": "https://example.com/apple-iphone", "source": "TechCrunch", "date": "2026-02-03"},
-                {"title": "Apple's quarterly earnings beat expectations", "link": "https://example.com/apple-earnings", "source": "Bloomberg", "date": "2026-01-30"},
-                {"title": "Apple faces supply chain issues in Asia", "link": None, "source": "Reuters", "date": "2026-01-25"}
-            ],
-            "valuation": {"ticker": "AAPL.US", "name": "Apple Inc.", "sector": "Technology", "market_cap": 2.5e12, "pe": 28.5, "pb": 7.5, "beta": 1.2, "dividend_yield": 0.006, "profit_margin": 0.25},
-            "risk": {"volatility_ann": 0.2, "max_drawdown": 0.15, "start_date": "2025-11-07", "end_date": "2026-02-04", "n": 60}
-        }
-    brief_md = "#### Snapshots\n- Price up 3% over last 60 days\n- PE of 28.5, PB of 7.5, market cap of $2.5T\n\n#### Metrics\n- Annualized volatility of 20%, max drawdown of 15%\n\n#### What it might mean\nThe modest price increase despite strong earnings and new product release could indicate cautious investor sentiment, possibly due to supply chain concerns and broader market volatility.\n\n#### Caveats\n- The return is relatively small and may not be statistically significant.\n- Fundamentals look solid but the high valuation metrics suggest expectations are already priced in.\n- Risk metrics indicate elevated volatility, which could lead to larger swings in either direction."
+    # artifacts = {
+    #         "price": { "ticker": "AAPL.US", "total_return": 0.0299, "start_date": "2025-11-07", "end_date": "2026-02-04", "n": 60, "first_close": 268.4, "last_close": 276.4 },
+    #         "headlines": [
+    #             {"title": "Apple releases new iPhone model", "link": "https://example.com/apple-iphone", "source": "TechCrunch", "date": "2026-02-03"},
+    #             {"title": "Apple's quarterly earnings beat expectations", "link": "https://example.com/apple-earnings", "source": "Bloomberg", "date": "2026-01-30"},
+    #             {"title": "Apple faces supply chain issues in Asia", "link": None, "source": "Reuters", "date": "2026-01-25"}
+    #         ],
+    #         "valuation": {"ticker": "AAPL.US", "name": "Apple Inc.", "sector": "Technology", "market_cap": 2.5e12, "pe": 28.5, "pb": 7.5, "beta": 1.2, "dividend_yield": 0.006, "profit_margin": 0.25},
+    #         "risk": {"volatility_ann": 0.2, "max_drawdown": 0.15, "start_date": "2025-11-07", "end_date": "2026-02-04", "n": 60}
+    #     }
+    # brief_md = "#### Snapshots\n- Price up 3% over last 60 days\n- PE of 28.5, PB of 7.5, market cap of $2.5T\n\n#### Metrics\n- Annualized volatility of 20%, max drawdown of 15%\n\n#### What it might mean\nThe modest price increase despite strong earnings and new product release could indicate cautious investor sentiment, possibly due to supply chain concerns and broader market volatility.\n\n#### Caveats\n- The return is relatively small and may not be statistically significant.\n- Fundamentals look solid but the high valuation metrics suggest expectations are already priced in.\n- Risk metrics indicate elevated volatility, which could lead to larger swings in either direction."
         
     left, right = st.columns([1.2,1])
     
