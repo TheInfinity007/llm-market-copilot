@@ -34,7 +34,7 @@ def _render_metrics(artifacts: dict):
     with cols[0]:
         st.subheader("Price window")
         if isinstance(price, dict) and "error" not in price:
-            st.metric("Total return", f"{price.get('total_return', 0.0) * 100: .2f}%")
+            st.metric("Total return", f"{price.get('total_return', 0.0) * 100:.2f}%")
             st.caption(f"{price.get('start_date')} to {price.get('end_date')} . N={price.get('n')}")
             st.write(
                 pd.DataFrame([price]).rename(
@@ -52,11 +52,28 @@ def _render_metrics(artifacts: dict):
         
     with cols[1]:
         st.subheader("Fundamentals")
-    
+        if isinstance(valuation, dict) and "error" not in valuation:
+            df = pd.DataFrame([valuation])
+            keep = ["ticker", "name", "sector", "market_cap", "pe", "pb", "beta", "dividend_yield", "profit_margin"]
+            keep = [c for c in keep if c in df.columns]
+            st.write(df[keep].T)
+        elif isinstance(valuation, dict) and "error" in valuation:
+            st.warning(valuation["error"])
+        else:
+            st.info("No fundamentals tool output (not requested or tool not used).")
+            
     with cols[2]:
         st.subheader("Risk")
-        
-
+        if isinstance(risk, dict) and "error" not in risk:
+            st.metric("Volatility (ann.)", f"{risk.get('volatility_ann', 0.0) * 100:.2f}%")
+            st.metric("Max drawdown", f"{risk.get('max_drawdown', 0.0) * 100:.2f}%")    
+            st.caption(f"{risk.get('start_date')} to {risk.get('end_date')} . N={risk.get('n')}")
+            st.write(pd.DataFrame([risk]).T)
+        if isinstance(risk, dict) and "error" in risk:
+            st.warning(risk["error"])
+        else:
+            st.info("No risk tool output (not requested or tool not used).")
+            
     st.subheader("Headlines")
     if isinstance(headlines, list) and len(headlines) > 0:
         for h in headlines:
@@ -76,6 +93,7 @@ def _render_metrics(artifacts: dict):
                 
     else:
         st.info("No headlines tool output (not requested or tool not used).")
+
 if not run_btn:
     # with st.spinner("Running tools and generating brief..."):
     #     brief_md, artifacts = run_query(
@@ -94,7 +112,9 @@ if not run_btn:
                 {"title": "Apple releases new iPhone model", "link": "https://example.com/apple-iphone", "source": "TechCrunch", "date": "2026-02-03"},
                 {"title": "Apple's quarterly earnings beat expectations", "link": "https://example.com/apple-earnings", "source": "Bloomberg", "date": "2026-01-30"},
                 {"title": "Apple faces supply chain issues in Asia", "link": None, "source": "Reuters", "date": "2026-01-25"}
-            ]
+            ],
+            "valuation": {"ticker": "AAPL.US", "name": "Apple Inc.", "sector": "Technology", "market_cap": 2.5e12, "pe": 28.5, "pb": 7.5, "beta": 1.2, "dividend_yield": 0.006, "profit_margin": 0.25},
+            "risk": {"volatility_ann": 0.2, "max_drawdown": 0.15, "start_date": "2025-11-07", "end_date": "2026-02-04", "n": 60}
         }
         
     left, right = st.columns([1.2,1])
