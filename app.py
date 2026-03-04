@@ -69,7 +69,7 @@ def _render_metrics(artifacts: dict):
             st.metric("Max drawdown", f"{risk.get('max_drawdown', 0.0) * 100:.2f}%")    
             st.caption(f"{risk.get('start_date')} to {risk.get('end_date')} . N={risk.get('n')}")
             st.write(pd.DataFrame([risk]).T)
-        if isinstance(risk, dict) and "error" in risk:
+        elif isinstance(risk, dict) and "error" in risk:
             st.warning(risk["error"])
         else:
             st.info("No risk tool output (not requested or tool not used).")
@@ -116,12 +116,13 @@ if not run_btn:
             "valuation": {"ticker": "AAPL.US", "name": "Apple Inc.", "sector": "Technology", "market_cap": 2.5e12, "pe": 28.5, "pb": 7.5, "beta": 1.2, "dividend_yield": 0.006, "profit_margin": 0.25},
             "risk": {"volatility_ann": 0.2, "max_drawdown": 0.15, "start_date": "2025-11-07", "end_date": "2026-02-04", "n": 60}
         }
+    brief_md = "#### Snapshots\n- Price up 3% over last 60 days\n- PE of 28.5, PB of 7.5, market cap of $2.5T\n\n#### Metrics\n- Annualized volatility of 20%, max drawdown of 15%\n\n#### What it might mean\nThe modest price increase despite strong earnings and new product release could indicate cautious investor sentiment, possibly due to supply chain concerns and broader market volatility.\n\n#### Caveats\n- The return is relatively small and may not be statistically significant.\n- Fundamentals look solid but the high valuation metrics suggest expectations are already priced in.\n- Risk metrics indicate elevated volatility, which could lead to larger swings in either direction."
         
     left, right = st.columns([1.2,1])
     
     with left:
         st.subheader("Market brief")
-        st.markdown("brief text")
+        st.markdown(brief_md)
     
     with right:
         st.subheader("Tool-backed metrics")
