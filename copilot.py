@@ -371,13 +371,13 @@ def run_agent(query: str):
 # -----------------------------------------------------------------------
 
 
-response = run_agent(
-    "Ticker: AAPL.US. Compute total return over the last 60 trading days. "
-    "Fetch fundamentals and report PE, PB, market cap, sector, beta. "
-    "Pull 5 latest headlines and reference them briefly. "
-    "Write a short market brief with sections: Snapshots, Metrics, What it might mean, Caveats. "
-    "Keep it concise. Do not paste raw rows."
-)
+# response = run_agent(
+#     "Ticker: AAPL.US. Compute total return over the last 60 trading days. "
+#     "Fetch fundamentals and report PE, PB, market cap, sector, beta. "
+#     "Pull 5 latest headlines and reference them briefly. "
+#     "Write a short market brief with sections: Snapshots, Metrics, What it might mean, Caveats. "
+#     "Keep it concise. Do not paste raw rows."
+# )
 
 '''
 ================================================================================
@@ -420,12 +420,12 @@ Headlines reference (brief)
 # The output should show a return, volatility, and max drawdown all computed on the same dates.
 # -----------------------------------------------------------------------
 
-response = run_agent(
-    "Ticker: MSFT.US. Compute total return over the last 90 trading days. "
-    "Compute annualized volatility and max drawdown over the same window. "
-    "Use the same start_date and end_date as the return window. "
-    "Write a short market brief with sections: Snapshots, Metrics, What it might mean, Caveats. "
-)
+# response = run_agent(
+#     "Ticker: MSFT.US. Compute total return over the last 90 trading days. "
+#     "Compute annualized volatility and max drawdown over the same window. "
+#     "Use the same start_date and end_date as the return window. "
+#     "Write a short market brief with sections: Snapshots, Metrics, What it might mean, Caveats. "
+# )
 
 '''
 ================================================================================
@@ -463,11 +463,11 @@ Caveats
 # since the query explicitly says not to.
 # -----------------------------------------------------------------------
 
-response = run_agent(
-    "Ticker: AAPL.US. Pull 7 latest headlines. "
-    "Give a short 'what changed' summary in 6-8 lines, referring themes, not every headline. "
-    "Do not compute return unless needed."
-)
+# response = run_agent(
+#     "Ticker: AAPL.US. Pull 7 latest headlines. "
+#     "Give a short 'what changed' summary in 6-8 lines, referring themes, not every headline. "
+#     "Do not compute return unless needed."
+# )
 
 '''
 ================================================================================
